@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: ourapp-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ourapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: ourapp-server
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/ourapp
+      JWT_SECRET: our-private-jwt-secret-key-2024
+      JWT_EXPIRES_IN: 7d
+      PORT: 3001
+      CLIENT_URL: http://localhost:5173
+      DEFAULT_PASSWORD: ourlove
+      VAPID_PUBLIC_KEY: BF_7w2RPpMuasYHjsy9D-wYzyNJe10er9bmJj8hatSATshm_OViKApx4abLXlWan79NNvabIOd2_hVIO76IrSHY
+      VAPID_PRIVATE_KEY: 76BXg6TPJo4sFgb9vmL9gt4ZwD5RT2b2bN-A14t-fRU
+      VAPID_SUBJECT: mailto:benkliii96@gmail.com
+      STUN_SERVER: stun:stun.l.google.com:19302
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    volumes:
+      - ./server/uploads:/app/uploads
+      - ./server/avatars:/app/avatars
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: ourapp-client
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:

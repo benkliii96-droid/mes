@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                         Int                      @id @default(autoincrement())
+  username                   String                   @unique
+  passwordHash               String                   @map("password_hash")
+  avatarUrl                  String?                  @map("avatar_url")
+  nickname                   String?
+  themeMode                  String                   @default("light") @map("theme_mode")
+  themeColor                 String                   @default("default") @map("theme_color")
+  calendarNotificationsEnabled Boolean                 @default(true) @map("calendar_notifications_enabled")
+  lastSeenAt                 DateTime?                @map("last_seen_at")
+  createdAt                  DateTime                 @default(now()) @map("created_at")
+
+  messages                   Message[]
+  events                     Event[]
+  menstrualCycles            MenstrualCycle[]
+  pushSubscriptions          PushSubscription[]
+
+  @@map("users")
+}
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  sender      User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    Int       @map("sender_id")
+  content     String?
+  fileUrl     String?   @map("file_url")
+  fileType    String    @default("text") @map("file_type")
+  duration    Int?
+  isRead      Boolean   @default(false) @map("is_read")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+model Event {
+  id              Int       @id @default(autoincrement())
+  creator         User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId       Int       @map("creator_id")
+  title           String    @db.VarChar(255)
+  description     String?
+  eventDate       DateTime  @map("event_date") @db.Date
+  eventTime       DateTime? @map("event_time") @db.Time
+  recurrenceType  String    @default("once") @map("recurrence_type")
+  reminderMinutes Int?      @map("reminder_minutes")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("events")
+}
+
+model MenstrualCycle {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  startDate DateTime @map("start_date") @db.Date
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("menstrual_cycles")
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("push_subscriptions")
+}

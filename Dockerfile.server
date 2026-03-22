@@ -1,0 +1,19 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY server/package*.json ./server/
+COPY server/tsconfig.json ./server/
+COPY server/src ./server/src/
+COPY server/prisma ./server/prisma/
+
+WORKDIR /app/server
+RUN npm install
+RUN npx prisma generate
+
+EXPOSE 3001
+
+CMD ["npx", "tsx", "src/index.ts"]
